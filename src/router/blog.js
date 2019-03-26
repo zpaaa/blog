@@ -14,43 +14,59 @@ const handleBlogRouter = (req, res) => {
         if (!query) 
         return 
         const { author, keyword } = query
-        const listData = getList(author, keyword)
-        return new SuccessModel(listData)
+        const result = getList(author, keyword)   //一个promise
+        return result.then( listData => {
+            return new SuccessModel(listData)
+        })
+        // const listData = getList(author, keyword)
+        // return new SuccessModel(listData)
     }
 
     // 这是获取博客详情的接口
     if (method === 'GET' && path === '/api/blog/detail') {
         const { id } = query
-        const detailData = getDetail(id)
-        return new SuccessModel(detailData)
+        const detailResult = getDetail(id)
+        return detailResult.then(detailData=>{
+            return new SuccessModel(detailData)
+        })
+        // const detailData = getDetail(id)
+        // return new SuccessModel(detailData)
     }
 
     // 这是新建博客的接口
     if (method === 'POST' && path === '/api/blog/new') {
-        const data = newBlog(body)
-        return new SuccessModel(data)
+        body.author = 'lisi'    // 假数据
+        return  newBlog(body).then(data=>{
+            return new SuccessModel(data)
+        })
+        // const data = newBlog(body)
+        // return new SuccessModel(data)
     }
 
     // 这是更新博客的接口
     if (method === 'POST' && path === '/api/blog/update') {
         const { id } = query
-        const result = updateBlog(id, body)
-        if (result) {
-            return new SuccessModel()
-        } else {
-            return new ErrorModel('更新博客失败')
-        }
+        return  updateBlog(id, body).then(result=>{
+            if (result) {
+                return new SuccessModel()
+            } else {
+                return new ErrorModel('更新博客失败')
+            }
+        })
     }
     
     // 这是删除博客的接口
     if (method === 'POST' && path === '/api/blog/del') {
         const { id } = query
-        const result = delBlog(id, body)
-        if (result) {
-            return new SuccessModel()
-        } else {
-            return new ErrorModel('删除博客失败')
-        }
+        body.author = 'lisi'
+        return delBlog(id, body.author).then(result=>{
+            if (result) {
+                return new SuccessModel()
+            } else {
+                return new ErrorModel('删除博客失败')
+            }
+        })
+        
     }
 }
 module.exports = handleBlogRouter

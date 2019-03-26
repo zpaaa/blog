@@ -50,23 +50,37 @@ const serverHandle = async (req, res) => {
     console.log('postData-------:',postData)
     
     //处理blog 路由
-    const blogData = handleBlogRouter(req, res)
-    if (blogData) {
-        res.end(
-            JSON.stringify(blogData)
-        )
-        return
+    // const blogData = handleBlogRouter(req, res)
+    // if (blogData) {
+    //     res.end(
+    //         JSON.stringify(blogData)
+    //     )
+    //     return
+    // }
+
+    const blogResult = handleBlogRouter(req, res)
+    if (blogResult) {
+        return blogResult.then(blogData => {
+            res.end(
+                JSON.stringify(blogData)
+            )
+            
+        })
     }
     
     // 处理user 路由
-    const userData = handleUserRouter(req, res)
-    if (userData) {
-        res.end(
-            JSON.stringify(userData)
-        )
-        return
+    const userRes = handleUserRouter(req, res)
+    if (userRes){
+        return userRes.then(userData=>{
+            if (userData) {
+                res.end(
+                    JSON.stringify(userData)
+                )
+                return
+            }
+        })
     }
-
+    
     res.writeHead(404,{'Content-type': "text/plain"})
     res.write('404 NOT FOUND')
     res.end('')
