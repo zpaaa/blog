@@ -43,11 +43,22 @@ const serverHandle = async (req, res) => {
     // 解析query
     req.query = querystring.parse( req.url.split('?')[1] ) 
 
+    // 获取cookie
+    const cookieStr = req.headers.cookie || ''
+    req.cookie = []
+    cookieStr.split(';').forEach(item => {
+        if (!item) return 
+        const arr = item.split('=')
+        const key = arr[0]
+        const value = arr[1]
+        req.cookie[key] = value
+    })
+
     //处理postData
     let postData = await getPostData(req)
     req.body = postData
 
-    console.log('postData-------:',postData)
+    // console.log('postData-------:',postData)
     
     //处理blog 路由
     // const blogData = handleBlogRouter(req, res)
@@ -68,17 +79,27 @@ const serverHandle = async (req, res) => {
         })
     }
     
-    // 处理user 路由
-    const userRes = handleUserRouter(req, res)
-    if (userRes){
-        return userRes.then(userData=>{
-            if (userData) {
-                res.end(
-                    JSON.stringify(userData)
-                )
-                return
-            }
-        })
+    // 处理user 路由  
+    // promise
+    // const userRes = handleUserRouter(req, res)
+    // if (userRes){
+    //     return userRes.then(userData=>{
+    //         if (userData) {
+    //             res.end(
+    //                 JSON.stringify(userData)
+    //             )
+    //             return
+    //         }
+    //     })
+    // }
+
+    // async await
+    let userData = await handleUserRouter(req, res)
+    if (userData) {
+        res.end(
+            JSON.stringify(userData)
+        )
+        return
     }
     
     res.writeHead(404,{'Content-type': "text/plain"})
