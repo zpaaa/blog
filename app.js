@@ -2,6 +2,19 @@ const querystring = require('querystring')
 const handleBlogRouter = require('./src/router/blog')
 const handleUserRouter = require('./src/router/user')
 
+
+// session 数据
+const SESSION_DATA = {}
+
+ // 设置cookie 时间
+ const getCookieExpires = () =>{
+    const d = new Date()
+    d.setTime(d.getTime()+(24*60*60*1000)*1)
+    console.log(d, d.toGMTString())
+    return d.toGMTString()
+
+}
+
 // 处理postData
 const getPostData = (req)=>{
     const promise = new Promise((resolve,reject) => {
@@ -49,10 +62,25 @@ const serverHandle = async (req, res) => {
     cookieStr.split(';').forEach(item => {
         if (!item) return 
         const arr = item.split('=')
-        const key = arr[0]
-        const value = arr[1]
+        const key = arr[0].trim()
+        const value = arr[1].trim()
         req.cookie[key] = value
     })
+
+    // 解析session
+    let needSetCookie = false
+    let userId = req.cookie.userid
+    if(userId) {
+        if (!SESSION_DATA[userId]) {
+            SESSION_DATA[userId]= {}
+        }
+    } else {
+        needSetCookie = true
+        userId = `${new Date()}_${Math.random()}`
+        SESSION_DATA[userId] = {}
+    }
+    console.log('SESSIONDATA', SESSION_DATA)
+    req.session = SESSION_DATA[userId]
 
     //处理postData
     let postData = await getPostData(req)
@@ -72,6 +100,9 @@ const serverHandle = async (req, res) => {
     const blogResult = handleBlogRouter(req, res)
     if (blogResult) {
         return blogResult.then(blogData => {
+            if (needSetCookie) {
+                res.setHeader('Set-Cookie', `userid=${userId};path=/;httpOnly;expires=${getCookieExpires()}`)        //httpOnly 只能在服务端修改cookie信息
+            }
             res.end(
                 JSON.stringify(blogData)
             )
@@ -96,6 +127,9 @@ const serverHandle = async (req, res) => {
     // async await
     let userData = await handleUserRouter(req, res)
     if (userData) {
+        if (needSetCookie) {
+            res.setHeader('Set-Cookie', `userid=${userId};path=/;httpOnly;expires=${getCookieExpires()}`)        //httpOnly 只能在服务端修改cookie信息
+        }
         res.end(
             JSON.stringify(userData)
         )
